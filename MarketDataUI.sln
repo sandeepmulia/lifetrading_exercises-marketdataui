@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2036
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketDataUI", "MarketDataUI\MarketDataUI.csproj", "{FD410494-1D46-4C00-9ADB-D04141E4A146}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD410494-1D46-4C00-9ADB-D04141E4A146}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD410494-1D46-4C00-9ADB-D04141E4A146}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD410494-1D46-4C00-9ADB-D04141E4A146}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD410494-1D46-4C00-9ADB-D04141E4A146}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C7A566A2-F4FB-4750-892A-688A84273C4D}
+	EndGlobalSection
+EndGlobal
