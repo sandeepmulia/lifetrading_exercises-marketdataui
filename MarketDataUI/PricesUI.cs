@@ -38,7 +38,7 @@ namespace MarketDataUI
         private void PriceClient_OnPriceChanged(object sender, PriceChangedEventArgs e)
         {
 #if DEBUG
-            Debug.WriteLine("Price changed.. {0} {1} {2} {3} {4}", e.Symbol, e.BidQty, e.BidPrice, e.AskQty, e.AskPrice);
+            Debug.WriteLine($"Price changed.. Symbol {e.Symbol}, BidQty {e.BidQty}, BidPrice {e.BidPrice}, AskQty {e.AskQty}, AskPrice {e.AskPrice}");
 #endif
             var stock = new Stock()
             {
