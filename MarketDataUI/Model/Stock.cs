@@ -98,15 +98,9 @@ namespace MarketDataUI
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public override string ToString()
-        {
-            return string.Format("Symbol {0} : BidPrice {1} : AskPrice {2} : BidQty {3} : AskQty {4}", Symbol, BidPrice, AskPrice, BidQty, BidPrice);
-        }
+        public override string ToString() => string.Format("Symbol {0} : BidPrice {1} : AskPrice {2} : BidQty {3} : AskQty {4}", Symbol, BidPrice, AskPrice, BidQty, BidPrice);
 
-        protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
-        {
-            PropertyChanged?.Invoke(this, e);
-        }
+        protected virtual void OnPropertyChanged(PropertyChangedEventArgs e) => PropertyChanged?.Invoke(this, e);
 
         public override bool Equals(object obj)
         {
