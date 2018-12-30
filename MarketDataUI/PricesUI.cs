@@ -16,6 +16,8 @@ namespace MarketDataUI
         private Task _consumer;
         private Task _producer;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationToken _token;
+
         private BindingList<Stock> _stocks = new BindingList<Stock>();
         private readonly IPriceClient _priceClient = new PriceClient();
         private BlockingCollection<Stock> _queue = new BlockingCollection<Stock>();
@@ -33,6 +35,7 @@ namespace MarketDataUI
             PricesDataGridView.RowHeadersVisible = false;
             PricesDataGridView.DataSource = _stocks;
 
+            _token = _cancellationTokenSource.Token;
         }
 
         private void PriceClient_OnPriceChanged(object sender, PriceChangedEventArgs e)
@@ -123,8 +126,9 @@ namespace MarketDataUI
         {
             _producer = Task.Factory.StartNew(() =>
             {
-                if (_cancellationTokenSource.Token.IsCancellationRequested)
-                    _cancellationTokenSource.Token.Register(() => {
+                Debug.WriteLine("Restart...");
+                if (_token.IsCancellationRequested)
+                    _token.Register(() => {
                         if (_priceClient.IsRunning)
                         {
                             _priceClient.Stop();
@@ -132,7 +136,7 @@ namespace MarketDataUI
                     });
 
                 _priceClient.Start();
-            }, _cancellationTokenSource.Token);
+            }, _token);
 
             _priceClient.OnPriceChanged += PriceClient_OnPriceChanged;
         }
@@ -148,7 +152,7 @@ namespace MarketDataUI
             {
                 while (!Queue.IsCompleted)
                 {
-                    if (_cancellationTokenSource.Token.IsCancellationRequested)
+                    if (_token.IsCancellationRequested)
                         break;
 
                     Queue.TryTake(out Stock item);
@@ -157,7 +161,7 @@ namespace MarketDataUI
                         ProcessData(item);
                     }
                 }
-            }, _cancellationTokenSource.Token);
+            }, _token);
         }
 
         private void ProcessData(Stock item)
