@@ -11,20 +11,28 @@ namespace UnitTestProject
     public class UnitTest1
     {
         [TestMethod]
-        public void TestProducer()
+        public void TestProducerClient()
         {
             MarketDataUI.PricesUi p = new MarketDataUI.PricesUi();
+            var cancelTokenSrc = new CancellationTokenSource();
+            var token = cancelTokenSrc.Token;
             var privateObject = new PrivateObject(p);
-            privateObject.Invoke("StartProducerTask");
+            privateObject.Invoke("StartProducerTask", token);
+            privateObject.Invoke("StartConsumerTask", token);
+            Thread.Sleep(5000);
+            cancelTokenSrc.Cancel();
+
+            privateObject.Invoke("StopTasks");
+
             IPriceClient client = new PriceClient();
-            var res = Task.Factory.StartNew(() =>
-            {
+            var res = Task.Factory.StartNew(() => {
                 client.Start();
             });
+            
             client.OnPriceChanged += Client_OnPriceChanged;
-            Thread.Sleep(500);
+            Thread.Sleep(1000);
             client.Stop();
-            res.Wait();           
+            res.Wait();
         }
 
         private void Client_OnPriceChanged(object sender, PriceChangedEventArgs e)
@@ -72,7 +80,9 @@ namespace UnitTestProject
             });
 
             var privateObject = new PrivateObject(p);
-            privateObject.Invoke("StartConsumerTask");
+            var cancelTokenSrc = new CancellationTokenSource();
+            var token = cancelTokenSrc.Token;
+            privateObject.Invoke("StartConsumerTask", token);
 
             //Introduce sleep and give consumer task a chance to clear the queue
             //whilst it consumes data

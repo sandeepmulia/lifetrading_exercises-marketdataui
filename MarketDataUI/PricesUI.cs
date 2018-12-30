@@ -15,8 +15,7 @@ namespace MarketDataUI
     {
         private Task _consumer;
         private Task _producer;
-        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private readonly CancellationToken _token;
+        private CancellationTokenSource _cancellationTokenSource;
 
         private BindingList<Stock> _stocks = new BindingList<Stock>();
         private readonly IPriceClient _priceClient = new PriceClient();
@@ -35,7 +34,6 @@ namespace MarketDataUI
             PricesDataGridView.RowHeadersVisible = false;
             PricesDataGridView.DataSource = _stocks;
 
-            _token = _cancellationTokenSource.Token;
         }
 
         private void PriceClient_OnPriceChanged(object sender, PriceChangedEventArgs e)
@@ -87,8 +85,13 @@ namespace MarketDataUI
         /// <param name="e"></param>
         private void StartToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            StartConsumerTask();
-            StartProducerTask();
+            //Initialising cancellationTokenSource here gives flexibility to
+            //restart tasks
+            _cancellationTokenSource = new CancellationTokenSource();
+            var token = _cancellationTokenSource.Token;
+
+            StartConsumerTask(token);
+            StartProducerTask(token);
         }
 
         /// <summary>
@@ -122,21 +125,22 @@ namespace MarketDataUI
         /// <summary>
         /// Starts the price client in a separate Task to ensure the UI is not blocked
         /// </summary>
-        internal protected void StartProducerTask()
+        internal protected void StartProducerTask(CancellationToken token)
         {
             _producer = Task.Factory.StartNew(() =>
             {
-                Debug.WriteLine("Restart...");
-                if (_token.IsCancellationRequested)
-                    _token.Register(() => {
+                if (token.IsCancellationRequested)
+                {
+                    token.Register(() =>
+                    {
                         if (_priceClient.IsRunning)
                         {
                             _priceClient.Stop();
                         }
                     });
-
+                }
                 _priceClient.Start();
-            }, _token);
+            }, token);
 
             _priceClient.OnPriceChanged += PriceClient_OnPriceChanged;
         }
@@ -146,13 +150,13 @@ namespace MarketDataUI
         /// queue and then updates the BindingList bound to data grid triggering
         /// an update
         /// </summary>
-        internal protected void StartConsumerTask()
+        internal protected void StartConsumerTask(CancellationToken token)
         {
             _consumer = Task.Factory.StartNew(() =>
             {
                 while (!Queue.IsCompleted)
                 {
-                    if (_token.IsCancellationRequested)
+                    if (token.IsCancellationRequested)
                         break;
 
                     Queue.TryTake(out Stock item);
@@ -161,7 +165,7 @@ namespace MarketDataUI
                         ProcessData(item);
                     }
                 }
-            }, _token);
+            }, token);
         }
 
         private void ProcessData(Stock item)
