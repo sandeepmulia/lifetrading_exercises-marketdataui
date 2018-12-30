@@ -15,7 +15,7 @@ namespace MarketDataUI
     {
         private Task _consumer;
         private Task _producer;
-        private CancellationTokenSource _cancellationToken = new CancellationTokenSource();
+        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private BindingList<Stock> _stocks = new BindingList<Stock>();
         private readonly IPriceClient _priceClient = new PriceClient();
         private BlockingCollection<Stock> _queue = new BlockingCollection<Stock>();
@@ -66,7 +66,7 @@ namespace MarketDataUI
 
                 /* This snippet of code will bypass the usage of concurrent queue which speeds up
                  * the consumption of data and response to stop task is instantaneous*/
-                ProcessData(stock);                
+                ProcessData(stock);
             }
         }
 
@@ -104,23 +104,15 @@ namespace MarketDataUI
         /// </summary>
         internal protected void StopTasks()
         {
-            if (_priceClient.IsRunning)
-            {
-                _priceClient.Stop();
-            }
-
             _priceClient.OnPriceChanged -= PriceClient_OnPriceChanged;
 
-            if (_cancellationToken.IsCancellationRequested)
+            try
             {
-                try
-                {
-                    _cancellationToken.Cancel();
-                }
-                catch
-                {
-                    //Catch any exception when Thread is being cancelled. Do not rethrow
-                }
+                _cancellationTokenSource.Cancel();
+            }
+            catch
+            {
+                //Catch any exception when Thread is being cancelled. Do not rethrow
             }
         }
 
@@ -131,8 +123,16 @@ namespace MarketDataUI
         {
             _producer = Task.Factory.StartNew(() =>
             {
+                if (_cancellationTokenSource.Token.IsCancellationRequested)
+                    _cancellationTokenSource.Token.Register(() => {
+                        if (_priceClient.IsRunning)
+                        {
+                            _priceClient.Stop();
+                        }
+                    });
+
                 _priceClient.Start();
-            }, _cancellationToken.Token);
+            }, _cancellationTokenSource.Token);
 
             _priceClient.OnPriceChanged += PriceClient_OnPriceChanged;
         }
@@ -148,13 +148,16 @@ namespace MarketDataUI
             {
                 while (!Queue.IsCompleted)
                 {
+                    if (_cancellationTokenSource.Token.IsCancellationRequested)
+                        break;
+
                     Queue.TryTake(out Stock item);
                     if (item != null)
                     {
                         ProcessData(item);
                     }
                 }
-            }, _cancellationToken.Token);
+            }, _cancellationTokenSource.Token);
         }
 
         private void ProcessData(Stock item)
