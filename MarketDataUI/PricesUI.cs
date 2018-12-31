@@ -22,6 +22,7 @@ namespace MarketDataUI
         private BlockingCollection<Stock> _queue = new BlockingCollection<Stock>();
         private bool _formClosing = false;
         private bool _useMsgQueue = false;
+        private bool _isRunning = false;
 
         public PricesUi()
         {
@@ -85,13 +86,20 @@ namespace MarketDataUI
         /// <param name="e"></param>
         private void StartToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            _isRunning = true;
             //Initialising cancellationTokenSource here gives flexibility to
             //restart tasks
             _cancellationTokenSource = new CancellationTokenSource();
             var token = _cancellationTokenSource.Token;
 
-            StartConsumerTask(token);
+            //If message queue is enabled, enable consumer task, otherwise invoke 
+            //processdata directly in StartProducerTask - onPriceChanged handler
+            if (_useMsgQueue)
+            {
+                StartConsumerTask(token);
+            }
             StartProducerTask(token);
+            
         }
 
         /// <summary>
@@ -110,15 +118,20 @@ namespace MarketDataUI
         /// </summary>
         internal protected void StopTasks()
         {
-            _priceClient.OnPriceChanged -= PriceClient_OnPriceChanged;
+            if (_isRunning)
+            {
+                _priceClient.OnPriceChanged -= PriceClient_OnPriceChanged;
 
-            try
-            {
-                _cancellationTokenSource.Cancel();
-            }
-            catch
-            {
-                //Catch any exception when Thread is being cancelled. Do not rethrow
+                try
+                {
+                    _cancellationTokenSource.Cancel();
+                }
+                catch
+                {
+                    //Catch any exception when Thread is being cancelled. Do not rethrow
+                }
+
+                _isRunning = false;
             }
         }
 
