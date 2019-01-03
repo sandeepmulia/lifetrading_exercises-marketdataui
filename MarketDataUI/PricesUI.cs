@@ -86,20 +86,24 @@ namespace MarketDataUI
         /// <param name="e"></param>
         private void StartToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            _isRunning = true;
-            //Initialising cancellationTokenSource here gives flexibility to
-            //restart tasks
-            _cancellationTokenSource = new CancellationTokenSource();
-            var token = _cancellationTokenSource.Token;
-
-            //If message queue is enabled, enable consumer task, otherwise invoke 
-            //processdata directly in StartProducerTask - onPriceChanged handler
-            if (_useMsgQueue)
+            //Bug fix: check flag before spawning tasks as repeatedly hitting
+            //F2 key can cause unnecessary task creation
+            if (!_isRunning)
             {
-                StartConsumerTask(token);
-            }
-            StartProducerTask(token);
-            
+                //Initialising cancellationTokenSource here gives flexibility to
+                //restart tasks
+                _cancellationTokenSource = new CancellationTokenSource();
+                var token = _cancellationTokenSource.Token;
+
+                //If message queue is enabled, enable consumer task, otherwise invoke 
+                //processdata directly in StartProducerTask - onPriceChanged handler
+                if (_useMsgQueue)
+                {
+                    StartConsumerTask(token);
+                }
+                StartProducerTask(token);
+                _isRunning = true;
+            }            
         }
 
         /// <summary>
@@ -153,7 +157,7 @@ namespace MarketDataUI
                     });
                 }
                 _priceClient.Start();
-            }, token);
+            }, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
             _priceClient.OnPriceChanged += PriceClient_OnPriceChanged;
         }
@@ -178,7 +182,7 @@ namespace MarketDataUI
                         ProcessData(item);
                     }
                 }
-            }, token);
+            }, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         private void ProcessData(Stock item)
