@@ -14,13 +14,13 @@ namespace UnitTestProject
     [TestClass]
     public class UnitTest1
     {
-        public readonly MarketDataUI.PricesUi p;
+        public readonly MarketDataUI.PricesUi priceUi;
         public readonly PrivateObject privateObject;
 
         public UnitTest1()
         {
-            p = new MarketDataUI.PricesUi();
-            privateObject = new PrivateObject(p);
+            priceUi = new MarketDataUI.PricesUi();
+            privateObject = new PrivateObject(priceUi);
         }
         
 
@@ -28,10 +28,8 @@ namespace UnitTestProject
         public void TestCoreDataProcessorWithMockClient()
         {
             var mock = new Mock<IPriceClient>();
-            mock.Setup(x => x.Start(0));           
             mock.Object.OnPriceChanged += Client_OnPriceChanged;
 
-            mock.Object.Start(0);
             var priceChangedEvent = new PriceChangedEventArgs("A", 10, 20.3m, 21.3m, 11);
             mock.Raise(item => item.OnPriceChanged += null, "sender", priceChangedEvent);
 
