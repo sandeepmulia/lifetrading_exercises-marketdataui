@@ -61,7 +61,7 @@ namespace MarketDataUI
                  * With Producer-Consumer queue, the task cancels will take a while i.e. consumer queue should
                  * become empty after which the program stops updating the grid
                  * */
-                Queue.Add(stock);
+                _queue.Add(stock);
             }
             else
             {
@@ -171,12 +171,12 @@ namespace MarketDataUI
         {
             _consumer = Task.Factory.StartNew(() =>
             {
-                while (!Queue.IsCompleted)
+                while (!_queue.IsCompleted)
                 {
                     if (token.IsCancellationRequested)
                         break;
 
-                    Queue.TryTake(out Stock item);
+                    _queue.TryTake(out Stock item);
                     if (item != null)
                     {
                         ProcessData(item);
@@ -238,19 +238,6 @@ namespace MarketDataUI
         private void PricesUi_FormClosed(object sender, FormClosedEventArgs e)
         {
             StopTasks();
-        }
-
-        public BlockingCollection<Stock> Queue
-        {
-            get
-            {
-                return _queue;
-            }
-
-            set
-            {
-                _queue = value;
-            }
         }
     }
 }
